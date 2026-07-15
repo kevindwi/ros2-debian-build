@@ -46,13 +46,23 @@ jobs:
         run: |
           mkdir -p ~/ros2_jazzy/src
           cd ~/ros2_jazzy
+          # URL yang benar untuk ROS 2 Jazzy
+          wget https://raw.githubusercontent.com/ros/rosdistro/master/ros2/jazzy/distribution.yaml -O jazzy-distro.yaml
+          # Menggunakan vcstool untuk mengambil repositori yang tepat
           wget https://raw.githubusercontent.com/ros/rosdistro/master/ros2/ros2.repos
+
+          # CATATAN: Karena Anda ingin mendownload versi Jazzy, pastikan mengambil branch/file yang sesuai.
+          # Untuk Jazzy, struktur repositorinya bisa diambil langsung menggunakan vcs dengan file repo jazzy khusus:
+          rm -f ros2.repos
+          wget https://raw.githubusercontent.com/ros2/ros2/jazzy/ros2.repos
+
           vcs import src < ros2.repos
 
       - name: Install Rosdep Dependencies
         run: |
           cd ~/ros2_jazzy
-          rosdep install --from-paths src --ignore-src -y --rosdistro jazzy --os=ubuntu:jammy \
+          # Menggunakan --os=ubuntu:noble karena Jazzy berbasis Ubuntu 24.04 Noble
+          rosdep install --from-paths src --ignore-src -y --rosdistro jazzy --os=ubuntu:noble \
             --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
 
       - name: Build ROS 2 with Colcon
