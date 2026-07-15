@@ -61,12 +61,11 @@ jobs:
       - name: Install Dependencies Using Rosdep
         run: |
           cd ~/ros2_jazzy
-          # Inisialisasi rosdep bawaan ros-dev-tools
           rosdep init || true
           rosdep update
-          # Memaksa deteksi target ubuntu:noble karena Debian Trixie/Bookworm menggunakan dependensi yang mirip
+          # Menambahkan python3-sip-dev ke dalam --skip-keys
           rosdep install --from-paths src --ignore-src -y --os=ubuntu:noble \
-            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
+            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers python3-sip-dev"
 
       - name: Install Colcon Mixins & Build Code
         run: |
