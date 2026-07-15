@@ -63,9 +63,22 @@ jobs:
           cd ~/ros2_jazzy
           rosdep init || true
           rosdep update
-          # Menambahkan python3-sip-dev ke dalam --skip-keys
+
+          # Trik: Buat rule kustom agar rosdep mengabaikan python3-sip-dev
+          mkdir -p /etc/ros/rosdep/sources.list.d/
+          echo "python3-sip-dev:" > /tmp/custom_rosdep.yaml
+          echo "  ubuntu: []" >> /tmp/custom_rosdep.yaml
+          echo "  debian: []" >> /tmp/custom_rosdep.yaml
+
+          sudo cp /tmp/custom_rosdep.yaml /etc/ros/rosdep/custom.yaml
+          echo "yaml file:///etc/ros/rosdep/custom.yaml" | sudo tee /etc/ros/rosdep/sources.list.d/99-custom.list > /dev/null
+
+          # Update ulang rosdep agar membaca rule baru
+          rosdep update
+
+          # Jalankan instalasi dependensi
           rosdep install --from-paths src --ignore-src -y --os=ubuntu:noble \
-            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers python3-sip-dev"
+            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
 
       - name: Install Colcon Mixins & Build Code
         run: |
