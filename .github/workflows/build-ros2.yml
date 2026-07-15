@@ -17,7 +17,7 @@ jobs:
 
       - name: Install Prerequisite Tools
         run: |
-          apt update && apt install -y curl gnupg2 lsb-release wget sudo git python3-pip awk
+          apt update && apt install -y curl gnupg2 lsb-release wget sudo git python3-pip gawk
 
       - name: Setup Locale
         run: |
