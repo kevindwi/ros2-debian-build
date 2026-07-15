@@ -1,0 +1,68 @@
+name: Build ROS 2 for Debian
+
+on:
+  workflow_dispatch: # Memungkinkan Anda menjalankan build secara manual lewat tombol di GitHub
+
+jobs:
+  build-ros2:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie # Menggunakan base image Debian agar dependensinya cocok
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Prerequisite Tools
+        run: |
+          apt update && apt install -y curl gnupg2 lsb-release wget sudo git python3-pip
+
+      - name: Setup Locale
+        run: |
+          apt install -y locales
+          locale-gen en_US en_US.UTF-8
+          update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+      - name: Add ROS 2 Repository
+        run: |
+          sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+      - name: Install Development Tools & ROS Dependencies
+        run: |
+          apt update && apt install -y \
+            build-essential cmake python3-colcon-common-extensions \
+            python3-flake8 python3-rosdep python3-setuptools python3-vcstool
+          rosdep init
+          rosdep update
+
+      - name: Download ROS 2 Source Code
+        run: |
+          mkdir -p ~/ros2_jazzy/src
+          cd ~/ros2_jazzy
+          wget https://raw.githubusercontent.com/ros/rosdistro/master/ros2/ros2.repos
+          vcs import src < ros2.repos
+
+      - name: Install Rosdep Dependencies
+        run: |
+          cd ~/ros2_jazzy
+          rosdep install --from-paths src --ignore-src -y --rosdistro jazzy --os=ubuntu:jammy \
+            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
+
+      - name: Build ROS 2 with Colcon
+        run: |
+          cd ~/ros2_jazzy
+          # Menggunakan semua core CPU yang tersedia di GitHub runner agar cepat
+          colcon build --merge-install
+
+      - name: Compress Build Output
+        run: |
+          cd ~/ros2_jazzy
+          tar -czf ros2-jazzy-debian.tar.gz install/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ros2-debian-binaries
+          path: ~/ros2_jazzy/ros2-jazzy-debian.tar.gz
+          retention-days: 7 # File zip akan disimpan selama 7 hari di GitHub
